@@ -245,12 +245,13 @@ const DelegationCheckerInner: React.FC = () => {
   // Styles
   const containerStyle: React.CSSProperties = {
     fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    maxWidth: '800px',
+    maxWidth: '900px',
     margin: '0 auto',
     padding: '30px',
     backgroundColor: 'white',
     borderRadius: '12px',
-    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.1)'
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    border: '1px solid #e2e8f0'
   };
 
   const titleStyle: React.CSSProperties = {
@@ -289,19 +290,20 @@ const DelegationCheckerInner: React.FC = () => {
   const buttonStyle: React.CSSProperties = {
     flex: 1,
     padding: '12px 24px',
-    background: loading ? '#cbd5e0' : '#667eea',
+    background: loading ? '#e2e8f0' : '#4f46e5',
     color: 'white',
     border: 'none',
     borderRadius: '8px',
     fontSize: '16px',
     fontWeight: 600,
     cursor: loading ? 'not-allowed' : 'pointer',
-    transition: 'background-color 0.3s ease'
+    transition: 'all 0.2s ease',
+    boxShadow: loading ? 'none' : '0 2px 4px rgba(79, 70, 229, 0.2)'
   };
 
   const loadingStyle: React.CSSProperties = {
     textAlign: 'center',
-    color: '#667eea',
+    color: '#4f46e5',
     fontWeight: 600,
     margin: '20px 0'
   };
@@ -315,20 +317,23 @@ const DelegationCheckerInner: React.FC = () => {
 
   const successResultStyle: React.CSSProperties = {
     ...resultStyle,
-    backgroundColor: '#f0fff4',
-    borderColor: '#68d391'
+    backgroundColor: '#f0fdf4',
+    borderColor: '#22c55e',
+    border: '2px solid #22c55e'
   };
 
   const notDelegatedResultStyle: React.CSSProperties = {
     ...resultStyle,
-    backgroundColor: '#fffbf0',
-    borderColor: '#f6ad55'
+    backgroundColor: '#fefce8',
+    borderColor: '#eab308',
+    border: '2px solid #eab308'
   };
 
   const errorResultStyle: React.CSSProperties = {
     ...resultStyle,
-    backgroundColor: '#fff5f5',
-    borderColor: '#fc8181'
+    backgroundColor: '#fef2f2',
+    borderColor: '#ef4444',
+    border: '2px solid #ef4444'
   };
 
   const statusStyle: React.CSSProperties = {
@@ -341,7 +346,8 @@ const DelegationCheckerInner: React.FC = () => {
     backgroundColor: '#f7fafc',
     padding: '15px',
     borderRadius: '6px',
-    margin: '15px 0'
+    margin: '15px 0',
+    border: '1px solid #e2e8f0'
   };
 
   const detailsHeaderStyle: React.CSSProperties = {
@@ -352,7 +358,9 @@ const DelegationCheckerInner: React.FC = () => {
   const codeStyle: React.CSSProperties = {
     fontFamily: "'Courier New', monospace",
     wordBreak: 'break-all',
-    margin: '5px 0'
+    margin: '5px 0',
+    color: '#374151',
+    fontSize: '14px'
   };
 
   const apiExampleStyle: React.CSSProperties = {
@@ -369,9 +377,10 @@ const DelegationCheckerInner: React.FC = () => {
   const defaultExampleStyle: React.CSSProperties = {
     marginTop: '20px',
     padding: '15px',
-    backgroundColor: '#edf2f7',
-    borderRadius: '6px',
-    borderLeft: '4px solid #667eea'
+    backgroundColor: '#f1f5f9',
+    borderRadius: '8px',
+    borderLeft: '4px solid #4f46e5',
+    border: '1px solid #e2e8f0'
   };
 
   return (
@@ -417,12 +426,21 @@ const DelegationCheckerInner: React.FC = () => {
       </form>
 
       {/* Wallet Connection Section */}
-      <div style={{...formGroupStyle, textAlign: 'center', marginTop: '30px', marginBottom: '20px'}}>
-        <h3 style={{marginBottom: '15px', color: '#555'}}>Wallet Connection</h3>
+      <div style={{
+        ...formGroupStyle, 
+        textAlign: 'center', 
+        marginTop: '30px', 
+        marginBottom: '20px',
+        padding: '20px',
+        backgroundColor: '#f8fafc',
+        borderRadius: '12px',
+        border: '1px solid #e2e8f0'
+      }}>
+        <h3 style={{marginBottom: '15px', color: '#374151', fontSize: '18px'}}>🔗 Wallet Connection</h3>
         <WalletMultiButton />
         {connected && publicKey && (
-          <p style={{marginTop: '10px', fontSize: '14px', color: '#666'}}>
-            Connected: {publicKey.toString().slice(0, 8)}...{publicKey.toString().slice(-8)}
+          <p style={{marginTop: '12px', fontSize: '14px', color: '#059669', fontWeight: '500'}}>
+            ✅ Connected: {publicKey.toString().slice(0, 8)}...{publicKey.toString().slice(-8)}
           </p>
         )}
       </div>
@@ -433,7 +451,8 @@ const DelegationCheckerInner: React.FC = () => {
           type="button" 
           style={{
             ...buttonStyle,
-            background: (!connected || pingLoading) ? '#cbd5e0' : '#f6ad55',
+            background: (!connected || pingLoading) ? '#e2e8f0' : '#f59e0b',
+            boxShadow: (!connected || pingLoading) ? 'none' : '0 2px 4px rgba(245, 158, 11, 0.2)',
             cursor: (!connected || pingLoading) ? 'not-allowed' : 'pointer'
           }} 
           onClick={handlePingTransaction} 
@@ -446,14 +465,14 @@ const DelegationCheckerInner: React.FC = () => {
       {/* Ping Results */}
       {pingError && (
         <div style={errorResultStyle}>
-          <div style={{...statusStyle, color: '#e53e3e'}}>❌ Ping Error</div>
+          <div style={{...statusStyle, color: '#dc2626'}}>❌ Ping Error</div>
           <p><strong>Error:</strong> {pingError}</p>
         </div>
       )}
 
       {pingResult && (
         <div style={successResultStyle}>
-          <div style={{...statusStyle, color: '#38a169'}}>✅ Ping Transaction Sent</div>
+          <div style={{...statusStyle, color: '#16a34a'}}>✅ Ping Transaction Sent</div>
           <div style={detailsStyle}>
             <h3 style={detailsHeaderStyle}>Transaction Details</h3>
             <p style={codeStyle}><strong>Signature:</strong> {pingResult}</p>
@@ -477,14 +496,14 @@ const DelegationCheckerInner: React.FC = () => {
       
       {error && (
         <div style={errorResultStyle}>
-          <div style={{...statusStyle, color: '#e53e3e'}}>❌ Error</div>
+          <div style={{...statusStyle, color: '#dc2626'}}>❌ Error</div>
           <p><strong>Error:</strong> {error}</p>
         </div>
       )}
       
       {result && (
         <div style={result.status === 'DELEGATED' ? successResultStyle : notDelegatedResultStyle}>
-          <div style={{...statusStyle, color: result.status === 'DELEGATED' ? '#38a169' : '#d69e2e'}}>
+          <div style={{...statusStyle, color: result.status === 'DELEGATED' ? '#16a34a' : '#ca8a04'}}>
             {result.status === 'DELEGATED' ? '✅ Account is DELEGATED' : '❌ Account is NOT DELEGATED'}
           </div>
           
