@@ -1,0 +1,36 @@
+{
+  "name": "magic-router-delegation-scripts",
+  "version": "1.0.0",
+  "description": "Scripts to check delegation status for magic-router",
+  "main": "check_delegation.ts",
+  "scripts": {
+    "check": "npx ts-node check_delegation.ts",
+    "build": "npx tsc check_delegation.ts --outDir dist --target es2020 --module commonjs",
+    "example": "npx ts-node example.ts"
+  },
+  "dependencies": {
+    "@solana/web3.js": "^1.95.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.9.0"
+  },
+  "type": "module",
+  "keywords": [
+    "solana",
+    "delegation",
+    "magic-router",
+    "pda",
+    "blockchain"
+  ],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": ""
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}

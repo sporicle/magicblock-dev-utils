@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Magic Router Delegation Checker</title>
+    <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 2rem;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+        
+        input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 12px 24px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        
+        button:hover:not(:disabled) {
+            background: #5a67d8;
+        }
+        
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #667eea;
+            font-weight: 600;
+        }
+        
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .result.success {
+            background: #f0fff4;
+            border: 2px solid #68d391;
+        }
+        
+        .result.error {
+            background: #fff5f5;
+            border: 2px solid #fc8181;
+        }
+        
+        .result.not-delegated {
+            background: #fffbf0;
+            border: 2px solid #f6ad55;
+        }
+        
+        .status {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+        
+        .status.delegated {
+            color: #38a169;
+        }
+        
+        .status.not-delegated {
+            color: #d69e2e;
+        }
+        
+        .status.error {
+            color: #e53e3e;
+        }
+        
+        .details {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+        }
+        
+        .details h3 {
+            margin: 0 0 10px 0;
+            color: #2d3748;
+        }
+        
+        .details p {
+            margin: 5px 0;
+            font-family: 'Courier New', monospace;
+            word-break: break-all;
+        }
+        
+        .api-example {
+            background: #1a202c;
+            color: #e2e8f0;
+            padding: 15px;
+            border-radius: 6px;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+        }
+        
+        .default-example {
+            margin-top: 20px;
+            padding: 15px;
+            background: #edf2f7;
+            border-radius: 6px;
+            border-left: 4px solid #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🪄 Magic Router Delegation Checker</h1>
+        
+        <form id="delegationForm">
+            <div class="form-group">
+                <label for="accountPubkey">Account Public Key:</label>
+                <input 
+                    type="text" 
+                    id="accountPubkey" 
+                    placeholder="Enter Solana account public key" 
+                    value="9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM"
+                    required
+                >
+            </div>
+            
+            <div class="form-group">
+                <label for="rpcUrl">RPC URL (Optional):</label>
+                <input 
+                    type="url" 
+                    id="rpcUrl" 
+                    placeholder="https://rpc.ironforge.network/devnet?apiKey=..."
+                >
+            </div>
+            
+            <div class="button-group">
+                <button type="submit">Check Delegation Status</button>
+                <button type="button" onclick="clearResults()">Clear Results</button>
+            </div>
+        </form>
+        
+        <div class="default-example">
+            <strong>💡 Try the default example:</strong> The pre-filled account key above is a test account. Click "Check Delegation Status" to see how it works!
+        </div>
+        
+        <div class="loading" id="loading">
+            🔄 Checking delegation status...
+        </div>
+        
+        <div class="result" id="result">
+            <!-- Results will be populated here -->
+        </div>
+    </div>
+
+    <script>
+        // Delegation program constants
+        const DELEGATION_PROGRAM_STR = "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh";
+        const DELEGATION_RECORD_DATA_SIZE = 96;
+        const DEFAULT_RPC_URL = "https://api.devnet.solana.com";
+
+        // PDA derivation function
+        function getDelegationRecordPDA(accountPubkey) {
+            const delegationProgram = new solanaWeb3.PublicKey(DELEGATION_PROGRAM_STR);
+            // Use TextEncoder for cross-platform compatibility
+            const textEncoder = new TextEncoder();
+            const seeds = [
+                textEncoder.encode("delegation"), 
+                accountPubkey.toBuffer()
+            ];
+            const [pda] = solanaWeb3.PublicKey.findProgramAddressSync(seeds, delegationProgram);
+            return pda;
+        }
+
+        // Data extraction function
+        function extractDelegationIdentity(data) {
+            if (data.length !== DELEGATION_RECORD_DATA_SIZE) return null;
+            // Bytes 0-7: discriminator, Bytes 8-39: validator identity (32 bytes)
+            const identityBytes = data.slice(8, 40);
+            return new solanaWeb3.PublicKey(identityBytes);
+        }
+
+        // Main delegation checking function
+        async function checkDelegation(accountPubkeyStr, rpcUrl) {
+            const finalRpcUrl = rpcUrl || DEFAULT_RPC_URL;
+            
+            try {
+                // Parse account pubkey
+                const accountPubkey = new solanaWeb3.PublicKey(accountPubkeyStr);
+                
+                // Create RPC connection
+                const connection = new solanaWeb3.Connection(finalRpcUrl, 'confirmed');
+                
+                // Calculate delegation PDA
+                const delegationPDA = getDelegationRecordPDA(accountPubkey);
+                
+                // Query PDA account
+                const pdaAccountInfo = await connection.getAccountInfo(delegationPDA, 'confirmed');
+                
+                const result = {
+                    accountPubkey: accountPubkeyStr,
+                    delegationPDA: delegationPDA.toString(),
+                    status: 'NOT_DELEGATED'
+                };
+                
+                if (!pdaAccountInfo || pdaAccountInfo.lamports === 0) {
+                    return result;
+                }
+                
+                // Store PDA account info
+                result.pdaAccount = {
+                    lamports: pdaAccountInfo.lamports,
+                    owner: pdaAccountInfo.owner.toString(),
+                    dataLength: pdaAccountInfo.data.length,
+                    executable: pdaAccountInfo.executable,
+                    rentEpoch: pdaAccountInfo.rentEpoch
+                };
+                
+                // Extract validator identity
+                const validatorIdentity = extractDelegationIdentity(pdaAccountInfo.data);
+                
+                if (validatorIdentity) {
+                    result.status = 'DELEGATED';
+                    result.validatorIdentity = validatorIdentity.toString();
+                    result.rawData = {
+                        discriminator: Array.from(pdaAccountInfo.data.slice(0, 8)),
+                        identityBytes: Array.from(pdaAccountInfo.data.slice(8, 40))
+                    };
+                }
+                
+                return result;
+                
+            } catch (error) {
+                throw new Error(`Failed to check delegation: ${error.message}`);
+            }
+        }
+
+        // Form submission handler
+        document.getElementById('delegationForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const accountPubkey = document.getElementById('accountPubkey').value.trim();
+            const rpcUrl = document.getElementById('rpcUrl').value.trim();
+            
+            if (!accountPubkey) {
+                showError('Please enter an account public key');
+                return;
+            }
+            
+            showLoading(true);
+            clearResults();
+            
+            try {
+                const result = await checkDelegation(accountPubkey, rpcUrl);
+                showResult(result);
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // Keyboard support
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && (e.target.id === 'accountPubkey' || e.target.id === 'rpcUrl')) {
+                document.getElementById('delegationForm').dispatchEvent(new Event('submit'));
+            }
+        });
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.querySelector('button[type="submit"]').disabled = show;
+        }
+
+        function clearResults() {
+            document.getElementById('result').style.display = 'none';
+        }
+
+        function showError(message) {
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = 'result error';
+            resultDiv.innerHTML = `
+                <div class="status error">❌ Error</div>
+                <p><strong>Error:</strong> ${message}</p>
+            `;
+            resultDiv.style.display = 'block';
+        }
+
+        function showResult(result) {
+            const resultDiv = document.getElementById('result');
+            
+            if (result.status === 'DELEGATED') {
+                resultDiv.className = 'result success';
+                resultDiv.innerHTML = `
+                    <div class="status delegated">✅ Account is DELEGATED</div>
+                    
+                    <div class="details">
+                        <h3>Account Information</h3>
+                        <p><strong>Account:</strong> ${result.accountPubkey}</p>
+                        <p><strong>Delegation PDA:</strong> ${result.delegationPDA}</p>
+                        <p><strong>Validator Identity:</strong> ${result.validatorIdentity}</p>
+                    </div>
+                    
+                    ${result.pdaAccount ? `
+                    <div class="details">
+                        <h3>PDA Account Details</h3>
+                        <p><strong>Lamports:</strong> ${result.pdaAccount.lamports}</p>
+                        <p><strong>Owner:</strong> ${result.pdaAccount.owner}</p>
+                        <p><strong>Data Length:</strong> ${result.pdaAccount.dataLength} bytes</p>
+                        <p><strong>Executable:</strong> ${result.pdaAccount.executable}</p>
+                        <p><strong>Rent Epoch:</strong> ${result.pdaAccount.rentEpoch}</p>
+                    </div>
+                    ` : ''}
+                    
+                    <div class="details">
+                        <h3>🎯 Magic Router API Usage</h3>
+                        <div class="api-example">curl -X POST "https://api.magicrouter.com/getAccountInfo" \\
+  -H "Content-Type: application/json" \\
+  -d '{"pubkey": "${result.accountPubkey}"}'
+
+# This request will be automatically routed to the ephemeral rollup node</div>
+                    </div>
+                `;
+            } else {
+                resultDiv.className = 'result not-delegated';
+                resultDiv.innerHTML = `
+                    <div class="status not-delegated">❌ Account is NOT DELEGATED</div>
+                    
+                    <div class="details">
+                        <h3>Account Information</h3>
+                        <p><strong>Account:</strong> ${result.accountPubkey}</p>
+                        <p><strong>Delegation PDA:</strong> ${result.delegationPDA}</p>
+                        <p><strong>Status:</strong> No active delegation found</p>
+                    </div>
+                    
+                    <div class="details">
+                        <h3>🎯 Magic Router API Usage</h3>
+                        <div class="api-example">curl -X POST "https://api.magicrouter.com/getAccountInfo" \\
+  -H "Content-Type: application/json" \\
+  -d '{"pubkey": "${result.accountPubkey}"}'
+
+# This request will be routed to the base Solana chain</div>
+                    </div>
+                `;
+            }
+            
+            resultDiv.style.display = 'block';
+        }
+    </script>
+</body>
+</html>
