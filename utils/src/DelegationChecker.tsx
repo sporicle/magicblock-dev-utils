@@ -156,10 +156,7 @@ async function checkDelegation(accountPubkeyStr: string, rpcUrl?: string): Promi
 // Main component that uses wallet
 const DelegationCheckerInner: React.FC = () => {
   const { publicKey, signTransaction, connected } = useWallet();
-  const [formState, setFormState] = useState<FormState>({
-    accountPubkey: '9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM',
-    rpcUrl: ''
-  });
+  const [accountPubkey, setAccountPubkey] = useState('9WzDXwBbmkg8ZTbNMqUxvQRAyrZzDsGYdLVL9zYtAWWM');
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<DelegationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -167,18 +164,10 @@ const DelegationCheckerInner: React.FC = () => {
   const [pingResult, setPingResult] = useState<string | null>(null);
   const [pingError, setPingError] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormState(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!formState.accountPubkey.trim()) {
+    if (!accountPubkey.trim()) {
       setError('Please enter an account public key');
       return;
     }
@@ -188,10 +177,7 @@ const DelegationCheckerInner: React.FC = () => {
     setResult(null);
     
     try {
-      const delegationResult = await checkDelegation(
-        formState.accountPubkey.trim(),
-        formState.rpcUrl.trim() || undefined
-      );
+      const delegationResult = await checkDelegation(accountPubkey.trim());
       setResult(delegationResult);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
@@ -200,20 +186,13 @@ const DelegationCheckerInner: React.FC = () => {
     }
   };
 
-  const clearResults = () => {
-    setResult(null);
-    setError(null);
-    setPingResult(null);
-    setPingError(null);
-  };
-
   const handlePingTransaction = async () => {
     if (!connected || !publicKey || !signTransaction) {
       setPingError('Please connect your wallet first');
       return;
     }
 
-    if (!formState.accountPubkey.trim()) {
+    if (!accountPubkey.trim()) {
       setPingError('Please enter an account public key first');
       return;
     }
@@ -223,9 +202,8 @@ const DelegationCheckerInner: React.FC = () => {
     setPingResult(null);
 
     try {
-      const targetPubkey = new PublicKey(formState.accountPubkey.trim());
-      const rpcUrl = formState.rpcUrl.trim() || DEFAULT_RPC_URL;
-      const connection = new Connection(rpcUrl, 'confirmed');
+      const targetPubkey = new PublicKey(accountPubkey.trim());
+      const connection = new Connection(DEFAULT_RPC_URL, 'confirmed');
 
       const signature = await sendPingTransaction(
         connection,
@@ -242,308 +220,184 @@ const DelegationCheckerInner: React.FC = () => {
     }
   };
 
-  // Styles
-  const containerStyle: React.CSSProperties = {
-    fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif",
-    maxWidth: '900px',
-    margin: '0 auto',
-    padding: '30px',
-    backgroundColor: 'white',
-    borderRadius: '12px',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-    border: '1px solid #e2e8f0'
-  };
-
-  const titleStyle: React.CSSProperties = {
-    color: '#333',
-    textAlign: 'center',
-    marginBottom: '30px',
-    fontSize: '2rem'
-  };
-
-  const formGroupStyle: React.CSSProperties = {
-    marginBottom: '20px'
-  };
-
-  const labelStyle: React.CSSProperties = {
-    display: 'block',
-    marginBottom: '8px',
-    fontWeight: 600,
-    color: '#555'
-  };
-
-  const inputStyle: React.CSSProperties = {
-    width: '100%',
-    padding: '12px',
-    border: '2px solid #e1e5e9',
-    borderRadius: '8px',
-    fontSize: '14px',
-    transition: 'border-color 0.3s ease'
-  };
-
-  const buttonGroupStyle: React.CSSProperties = {
-    display: 'flex',
-    gap: '10px',
-    marginBottom: '30px'
-  };
-
-  const buttonStyle: React.CSSProperties = {
-    flex: 1,
-    padding: '12px 24px',
-    background: loading ? '#e2e8f0' : '#4f46e5',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '16px',
-    fontWeight: 600,
-    cursor: loading ? 'not-allowed' : 'pointer',
-    transition: 'all 0.2s ease',
-    boxShadow: loading ? 'none' : '0 2px 4px rgba(79, 70, 229, 0.2)'
-  };
-
-  const loadingStyle: React.CSSProperties = {
-    textAlign: 'center',
-    color: '#4f46e5',
-    fontWeight: 600,
-    margin: '20px 0'
-  };
-
-  const resultStyle: React.CSSProperties = {
-    marginTop: '30px',
-    padding: '20px',
-    borderRadius: '8px',
-    border: '2px solid'
-  };
-
-  const successResultStyle: React.CSSProperties = {
-    ...resultStyle,
-    backgroundColor: '#f0fdf4',
-    borderColor: '#22c55e',
-    border: '2px solid #22c55e'
-  };
-
-  const notDelegatedResultStyle: React.CSSProperties = {
-    ...resultStyle,
-    backgroundColor: '#fefce8',
-    borderColor: '#eab308',
-    border: '2px solid #eab308'
-  };
-
-  const errorResultStyle: React.CSSProperties = {
-    ...resultStyle,
-    backgroundColor: '#fef2f2',
-    borderColor: '#ef4444',
-    border: '2px solid #ef4444'
-  };
-
-  const statusStyle: React.CSSProperties = {
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-    marginBottom: '15px'
-  };
-
-  const detailsStyle: React.CSSProperties = {
-    backgroundColor: '#f7fafc',
-    padding: '15px',
-    borderRadius: '6px',
-    margin: '15px 0',
-    border: '1px solid #e2e8f0'
-  };
-
-  const detailsHeaderStyle: React.CSSProperties = {
-    margin: '0 0 10px 0',
-    color: '#2d3748'
-  };
-
-  const codeStyle: React.CSSProperties = {
-    fontFamily: "'Courier New', monospace",
-    wordBreak: 'break-all',
-    margin: '5px 0',
-    color: '#374151',
-    fontSize: '14px'
-  };
-
-  const apiExampleStyle: React.CSSProperties = {
-    backgroundColor: '#1a202c',
-    color: '#e2e8f0',
-    padding: '15px',
-    borderRadius: '6px',
-    margin: '15px 0',
-    fontFamily: "'Courier New', monospace",
-    fontSize: '12px',
-    overflowX: 'auto'
-  };
-
-  const defaultExampleStyle: React.CSSProperties = {
-    marginTop: '20px',
-    padding: '15px',
-    backgroundColor: '#f1f5f9',
-    borderRadius: '8px',
-    borderLeft: '4px solid #4f46e5',
-    border: '1px solid #e2e8f0'
-  };
-
   return (
-    <div style={containerStyle}>
-      <h1 style={titleStyle}>🪄 Magic Router Delegation Checker</h1>
-      
-      <form onSubmit={handleSubmit}>
-        <div style={formGroupStyle}>
-          <label style={labelStyle} htmlFor="accountPubkey">Account Public Key:</label>
-          <input
-            style={inputStyle}
-            type="text"
-            id="accountPubkey"
-            name="accountPubkey"
-            placeholder="Enter Solana account public key"
-            value={formState.accountPubkey}
-            onChange={handleInputChange}
-            required
-          />
-        </div>
-        
-        <div style={formGroupStyle}>
-          <label style={labelStyle} htmlFor="rpcUrl">RPC URL (Optional):</label>
-          <input
-            style={inputStyle}
-            type="url"
-            id="rpcUrl"
-            name="rpcUrl"
-            placeholder="https://rpc.ironforge.network/devnet?apiKey=..."
-            value={formState.rpcUrl}
-            onChange={handleInputChange}
-          />
-        </div>
-        
-        <div style={buttonGroupStyle}>
-          <button type="submit" style={buttonStyle} disabled={loading}>
-            Check Delegation Status
-          </button>
-          <button type="button" style={buttonStyle} onClick={clearResults} disabled={loading}>
-            Clear Results
-          </button>
-        </div>
-      </form>
-
-      {/* Wallet Connection Section */}
-      <div style={{
-        ...formGroupStyle, 
-        textAlign: 'center', 
-        marginTop: '30px', 
-        marginBottom: '20px',
-        padding: '20px',
-        backgroundColor: '#f8fafc',
-        borderRadius: '12px',
-        border: '1px solid #e2e8f0'
+    <div style={{ position: 'relative', minHeight: '100vh', fontFamily: 'system-ui' }}>
+      {/* Wallet in top right */}
+      <div style={{ 
+        position: 'absolute', 
+        top: '20px', 
+        right: '20px',
+        zIndex: 1000
       }}>
-        <h3 style={{marginBottom: '15px', color: '#374151', fontSize: '18px'}}>🔗 Wallet Connection</h3>
         <WalletMultiButton />
-        {connected && publicKey && (
-          <p style={{marginTop: '12px', fontSize: '14px', color: '#059669', fontWeight: '500'}}>
-            ✅ Connected: {publicKey.toString().slice(0, 8)}...{publicKey.toString().slice(-8)}
-          </p>
-        )}
       </div>
 
-      {/* Ping Transaction Section */}
-      <div style={buttonGroupStyle}>
+      <div style={{ maxWidth: '600px', margin: '0 auto', padding: '60px 20px 20px', fontFamily: 'system-ui' }}>
+        <h1 style={{ textAlign: 'center', marginBottom: '30px' }}>Delegation Checker</h1>
+        
+        <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
+          <div style={{ marginBottom: '15px' }}>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500' }}>
+              Account Public Key:
+            </label>
+            <input
+              type="text"
+              value={accountPubkey}
+              onChange={(e) => setAccountPubkey(e.target.value)}
+              placeholder="Enter Solana account public key"
+              style={{
+                width: '100%',
+                padding: '10px',
+                border: '1px solid #ccc',
+                borderRadius: '4px',
+                fontSize: '14px'
+              }}
+              required
+            />
+          </div>
+          
+          <button 
+            type="submit" 
+            disabled={loading}
+            style={{
+              width: '100%',
+              padding: '10px',
+              backgroundColor: loading ? '#ccc' : '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '4px',
+              fontSize: '16px',
+              cursor: loading ? 'not-allowed' : 'pointer',
+              marginBottom: '10px'
+            }}
+          >
+            {loading ? 'Checking...' : 'Check Delegation Status'}
+          </button>
+        </form>
+
+        {/* Ping Transaction Button */}
         <button 
           type="button" 
-          style={{
-            ...buttonStyle,
-            background: (!connected || pingLoading) ? '#e2e8f0' : '#f59e0b',
-            boxShadow: (!connected || pingLoading) ? 'none' : '0 2px 4px rgba(245, 158, 11, 0.2)',
-            cursor: (!connected || pingLoading) ? 'not-allowed' : 'pointer'
-          }} 
-          onClick={handlePingTransaction} 
+          onClick={handlePingTransaction}
           disabled={!connected || pingLoading || loading}
+          style={{
+            width: '100%',
+            padding: '10px',
+            backgroundColor: (!connected || pingLoading) ? '#ccc' : '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '4px',
+            fontSize: '16px',
+            cursor: (!connected || pingLoading) ? 'not-allowed' : 'pointer',
+            marginBottom: '20px'
+          }}
         >
-          {pingLoading ? '🔄 Sending Ping...' : '🏓 Send No-Op Ping Transaction'}
+          {pingLoading ? 'Sending Ping...' : 'Send No-Op Ping Transaction'}
         </button>
-      </div>
 
-      {/* Ping Results */}
-      {pingError && (
-        <div style={errorResultStyle}>
-          <div style={{...statusStyle, color: '#dc2626'}}>❌ Ping Error</div>
-          <p><strong>Error:</strong> {pingError}</p>
-        </div>
-      )}
+        {/* Connection Status */}
+        {connected && publicKey && (
+          <div style={{ 
+            textAlign: 'center', 
+            marginBottom: '20px', 
+            padding: '10px', 
+            backgroundColor: '#d4edda', 
+            borderRadius: '4px',
+            color: '#155724'
+          }}>
+            ✅ Connected: {publicKey.toString().slice(0, 8)}...{publicKey.toString().slice(-8)}
+          </div>
+        )}
+        
+        {/* Ping Results */}
+        {pingError && (
+          <div style={{ 
+            padding: '15px', 
+            backgroundColor: '#f8d7da', 
+            border: '1px solid #f5c6cb', 
+            borderRadius: '4px', 
+            color: '#721c24',
+            marginBottom: '20px'
+          }}>
+            <strong>Ping Error:</strong> {pingError}
+          </div>
+        )}
 
-      {pingResult && (
-        <div style={successResultStyle}>
-          <div style={{...statusStyle, color: '#16a34a'}}>✅ Ping Transaction Sent</div>
-          <div style={detailsStyle}>
-            <h3 style={detailsHeaderStyle}>Transaction Details</h3>
-            <p style={codeStyle}><strong>Signature:</strong> {pingResult}</p>
-            <p style={codeStyle}><strong>From:</strong> {publicKey?.toString()}</p>
-            <p style={codeStyle}><strong>To:</strong> {formState.accountPubkey}</p>
-            <p style={codeStyle}><strong>Amount:</strong> 0 SOL (no-op transaction)</p>
-            <p style={codeStyle}><strong>RPC URL:</strong> {formState.rpcUrl || DEFAULT_RPC_URL}</p>
-          </div>
-        </div>
-      )}
-      
-      <div style={defaultExampleStyle}>
-        <strong>💡 Try the default example:</strong> The pre-filled account key above is a test account. Click "Check Delegation Status" to see how it works!
-      </div>
-      
-      {loading && (
-        <div style={loadingStyle}>
-          🔄 Checking delegation status...
-        </div>
-      )}
-      
-      {error && (
-        <div style={errorResultStyle}>
-          <div style={{...statusStyle, color: '#dc2626'}}>❌ Error</div>
-          <p><strong>Error:</strong> {error}</p>
-        </div>
-      )}
-      
-      {result && (
-        <div style={result.status === 'DELEGATED' ? successResultStyle : notDelegatedResultStyle}>
-          <div style={{...statusStyle, color: result.status === 'DELEGATED' ? '#16a34a' : '#ca8a04'}}>
-            {result.status === 'DELEGATED' ? '✅ Account is DELEGATED' : '❌ Account is NOT DELEGATED'}
-          </div>
-          
-          <div style={detailsStyle}>
-            <h3 style={detailsHeaderStyle}>Account Information</h3>
-            <p style={codeStyle}><strong>Account:</strong> {result.accountPubkey}</p>
-            <p style={codeStyle}><strong>Delegation PDA:</strong> {result.delegationPDA}</p>
-            {result.validatorIdentity && (
-              <p style={codeStyle}><strong>Validator Identity:</strong> {result.validatorIdentity}</p>
-            )}
-            {!result.validatorIdentity && (
-              <p style={codeStyle}><strong>Status:</strong> No active delegation found</p>
-            )}
-          </div>
-          
-          {result.pdaAccount && (
-            <div style={detailsStyle}>
-              <h3 style={detailsHeaderStyle}>PDA Account Details</h3>
-              <p style={codeStyle}><strong>Lamports:</strong> {result.pdaAccount.lamports}</p>
-              <p style={codeStyle}><strong>Owner:</strong> {result.pdaAccount.owner}</p>
-              <p style={codeStyle}><strong>Data Length:</strong> {result.pdaAccount.dataLength} bytes</p>
-              <p style={codeStyle}><strong>Executable:</strong> {result.pdaAccount.executable.toString()}</p>
-              <p style={codeStyle}><strong>Rent Epoch:</strong> {result.pdaAccount.rentEpoch}</p>
+        {pingResult && (
+          <div style={{ 
+            padding: '15px', 
+            backgroundColor: '#d4edda', 
+            border: '1px solid #c3e6cb', 
+            borderRadius: '4px', 
+            color: '#155724',
+            marginBottom: '20px'
+          }}>
+            <div style={{ fontSize: '16px', fontWeight: 'bold', marginBottom: '10px' }}>
+              ✅ Ping Transaction Sent
             </div>
-          )}
-          
-          <div style={detailsStyle}>
-            <h3 style={detailsHeaderStyle}>🎯 Magic Router API Usage</h3>
-            <div style={apiExampleStyle}>
-{`curl -X POST "https://api.magicrouter.com/getAccountInfo" \\
-  -H "Content-Type: application/json" \\
-  -d '{"pubkey": "${result.accountPubkey}"}'
-
-# This request will be ${result.status === 'DELEGATED' 
-  ? 'automatically routed to the ephemeral rollup node'
-  : 'routed to the base Solana chain'}`}
+            <div style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+              <div><strong>Signature:</strong> {pingResult}</div>
+              <div><strong>From:</strong> {publicKey?.toString()}</div>
+              <div><strong>To:</strong> {accountPubkey}</div>
+              <div><strong>Amount:</strong> 0 SOL (no-op)</div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+        
+        {error && (
+          <div style={{ 
+            padding: '15px', 
+            backgroundColor: '#f8d7da', 
+            border: '1px solid #f5c6cb', 
+            borderRadius: '4px', 
+            color: '#721c24',
+            marginBottom: '20px'
+          }}>
+            <strong>Error:</strong> {error}
+          </div>
+        )}
+        
+        {result && (
+          <div style={{ 
+            padding: '15px', 
+            backgroundColor: result.status === 'DELEGATED' ? '#d4edda' : '#fff3cd',
+            border: `1px solid ${result.status === 'DELEGATED' ? '#c3e6cb' : '#ffeaa7'}`,
+            borderRadius: '4px',
+            color: result.status === 'DELEGATED' ? '#155724' : '#856404'
+          }}>
+            <div style={{ fontSize: '18px', fontWeight: 'bold', marginBottom: '15px' }}>
+              {result.status === 'DELEGATED' ? '✅ Account is DELEGATED' : '❌ Account is NOT DELEGATED'}
+            </div>
+            
+            <div style={{ marginBottom: '15px' }}>
+              <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>Account Information</h3>
+              <div style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                <div><strong>Account:</strong> {result.accountPubkey}</div>
+                <div><strong>Delegation PDA:</strong> {result.delegationPDA}</div>
+                {result.validatorIdentity && (
+                  <div><strong>Validator Identity:</strong> {result.validatorIdentity}</div>
+                )}
+                {!result.validatorIdentity && (
+                  <div><strong>Status:</strong> No active delegation found</div>
+                )}
+              </div>
+            </div>
+
+            {result.pdaAccount && (
+              <div>
+                <h3 style={{ margin: '0 0 10px 0', fontSize: '16px' }}>PDA Account Details</h3>
+                <div style={{ fontSize: '14px', fontFamily: 'monospace' }}>
+                  <div><strong>Lamports:</strong> {result.pdaAccount.lamports}</div>
+                  <div><strong>Owner:</strong> {result.pdaAccount.owner}</div>
+                  <div><strong>Data Length:</strong> {result.pdaAccount.dataLength} bytes</div>
+                  <div><strong>Executable:</strong> {result.pdaAccount.executable.toString()}</div>
+                  <div><strong>Rent Epoch:</strong> {result.pdaAccount.rentEpoch}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   );
 };

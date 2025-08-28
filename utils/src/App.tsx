@@ -7,15 +7,7 @@ import '@solana/wallet-adapter-react-ui/styles.css';
 import './WalletStyles.css';
 
 function App() {
-  return (
-    <div style={{ 
-      minHeight: '100vh', 
-      background: '#f8fafc',
-      padding: '20px 0'
-    }}>
-      <DelegationChecker />
-    </div>
-  )
+  return <DelegationChecker />
 }
 
 export default App
